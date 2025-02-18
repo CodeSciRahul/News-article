@@ -1,0 +1,29 @@
+services:
+  db:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: news-article
+      POSTGRES_PASSWORD: news-article1234
+      POSTGRES_DB: news-articleDB
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  adminor:
+    image: adminer:latest
+    restart: always
+    ports:
+      - '8080:8080'
+
+  app:
+    build: .
+    ports:
+      - '3000:3000'
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgres://news-article:news-article1234@db:5432/news-articleDB
+
+volumes:
+  postgres_data:
