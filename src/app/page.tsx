@@ -1,7 +1,8 @@
+"use client"
 export default function Home() {
+window.location.href = "/dashboard"  
   return (
    <div>
-    docker is working good
    </div>
   );
 }
