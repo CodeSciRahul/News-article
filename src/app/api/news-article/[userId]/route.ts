@@ -1,11 +1,11 @@
 "use server";
 import { articles } from "@/db/schema";
 import { db } from "@/lib/db";
-import { NextApiRequest, NextApiResponse } from "next";
 import axios from "axios";
 import { ilike, and, eq } from "drizzle-orm";
 import type { SQL } from "drizzle-orm";
 import { userPreferences } from "@/db/schema";
+import { NextRequest } from "next/server";
 
 interface articleSchema {
   title: string;
@@ -44,33 +44,26 @@ async function get_news(userId: string) {
       .from(userPreferences)
       .where(eq(userPreferences?.userId, userId));
 
-    if (!userPreference) {
-      console.log("userPreference not created");
-      return
+    if (!userPreference || userPreference.length === 0) {
+      console.log("userPreference not created or empty");
+      return;
     }
 
     const { category, language, location } =
-      userPreference as unknown as userPreferenceSchema;
-    console.log(category);
+      userPreference[0] as unknown as userPreferenceSchema;
 
     let config = {
       method: "get",
       maxBodyLength: Infinity,
-      url: `https://google.serper.dev/news
-            ?q=${category.join("+")}
-            &location=Mumbai%2C+Maharashtra%2C+India
-            &gl=${location}
-            &hl=${language}
-            &num=${20}
-            &tbs=qdr%3Ay
-            &page=${2}
-            &apiKey=${process.env.SERPER_API_KEY}`,
-      headers: {},
+      url: `https://google.serper.dev/news?q=${category.slice().join("+")}&location=Mumbai%2C+Maharashtra%2C+India&gl=${location}&hl=${language}&num=20&tbs=qdr:y&page=2`,
+      headers: {
+        'X-API-KEY': process.env.SERPER_API_KEY
+      },
     };
 
     const response = await axios.request(config);
-    const data = JSON.parse(response?.data);
-    console.log(data);
+
+    const data = response?.data;
     return data;
   } catch (error) {
     console.log("Internal Server Error in get_news function", error);
@@ -78,18 +71,17 @@ async function get_news(userId: string) {
   }
 }
 
+
 //it will run hourly and store data in database.
 export async function POST(
-  req: NextApiRequest,
-  res: NextApiResponse,
+  req: NextRequest,
   { params }: { params: { userId: string } }
 ) {
   try {
-    const { userId } = params;
-    console.log(userId);
+    const { userId } = await params;
     const newsDatas: ArticlesSchemas = await get_news(userId);
 
-    if (!newsDatas.news.length) {
+    if (!newsDatas?.news?.length) {
       console.log("news not found");
       return;
     }
@@ -128,16 +120,15 @@ export async function POST(
 
 
 export async function GET(
-  req: NextApiRequest,
-  res: NextApiResponse,
+  req: NextRequest,
   { params }: { params: { userId: string } }
 ) {
   try {
     const { category, date, title, source, snippet } =
-      req.query as unknown as querySchema;
-    const { userId } = params;
-    const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 10;
+      req.nextUrl.searchParams as unknown as querySchema;
+    const { userId } = await params;
+    const page = Number(req.nextUrl.searchParams.get('page')) || 1;
+    const limit = Number(req.nextUrl.searchParams.get('limit')) || 10;
     const skip = (page - 1) * Number(limit);
 
     let filter: SQL[] = [];
@@ -149,16 +140,29 @@ export async function GET(
     if (source) filter.push(ilike(articles?.source, `%${source}`));
     if (snippet) filter.push(ilike(articles?.snippet, `%${snippet}`));
 
-    const news = await db
+    let news = await db
       .select()
       .from(articles)
       .where(and(...filter))
       .limit(limit)
       .offset(skip);
 
-    return res.status(200).send({ message: "News reterived successfully", data: news });
+      if (!news.length) {
+        // Call POST function to fetch and save news
+        await POST(req, { params: { userId } });
+  
+        // Fetch news again after inserting
+        news = await db
+          .select()
+          .from(articles)
+          .where(and(...filter))
+          .limit(limit)
+          .offset(skip);
+      }
+
+    return new Response(JSON.stringify({message: "News reterived successfully", data: news}), {status: 200});
   } catch (error) {
     console.log(error);
-    return res.status(500).send({ message: "Internal server error" });
+    return new Response(JSON.stringify({message: "Internal server error", data: null, error}), {status: 500});
   }
 }

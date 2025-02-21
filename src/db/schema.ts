@@ -10,14 +10,14 @@ export const userPreferences = pgTable("userPreferences", {
 
 
 export const articles = pgTable("articles", {
-    id: serial("id").primaryKey().notNull(),
-    userId: varchar('user_id', {length: 255}).notNull().unique(),
-    title: varchar('title', {length: 255}).notNull(),
-    link: varchar('link', {length: 512}).notNull(),
+    id: serial("id").primaryKey().notNull().unique(),
+    userId: varchar('user_id', {length: 290}).notNull(),
+    title: varchar('title', {length: 512}).notNull(),
+    link: varchar('link', {length: 700}).notNull(),
     snippet: varchar('snippet').notNull(),
-    date: varchar('date', {length: 50}),
+    date: varchar('date', {length: 80}),
     source: varchar('source'),
-    imageUrl: varchar('image_url', {length: 512}),
-    category: varchar('category', {length: 50}).notNull(),
+    imageUrl: varchar('image_url', {length: 812}),
+    category: varchar('category', {length: 70}).notNull(),
     createdAt: timestamp('created_at').defaultNow()
 })
