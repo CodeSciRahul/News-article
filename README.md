@@ -15,7 +15,7 @@ A dynamic news article platform built with **Next.js**, **TypeScript**, **MUI**,
 - **Frontend & Backend**: Next.js (with Bun runtime)
 - **Type Safety**: TypeScript
 - **Styling**: Tailwind CSS & MUI
-- **Database**: PostgreSQL (using Neon & Drizzle ORM)
+- **Database**: PostgreSQL (using Drizzle ORM and Docker to create instance of Postgree DB)
 - **APIs**: Serper.dev & Google AI Studio (Gemini API)
 
 ## 🔧 Installation & Setup
@@ -23,7 +23,7 @@ A dynamic news article platform built with **Next.js**, **TypeScript**, **MUI**,
 1. **Clone the Repository**
 
 ```bash
-git clone https://github.com/your-username/news-article-app.git
+git clone https://github.com/CodeSciRahul/News-article.git
 cd news-article-app
 ```
 
@@ -41,7 +41,14 @@ Create a `.env` file and add the following:
 SERPER_API_KEY=your_serper_api_key
 GOOGLE_AI_API_KEY=your_google_ai_api_key
 DATABASE_URL=your_postgresql_connection_string
+NEXT_PUBLIC_BASE_URL=http://localhost:3000
+DATABASE_URL=your_database_url
 ```
+Create a `.env.local` file and add the following:
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_next_public_clerk_publishable_key
+CLERK_SECRET_KEY=your_clerk_secret_key
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
+NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
 
 4. **Run the Development Server**
 
@@ -61,9 +68,9 @@ bun start
 ```
 src/
 ├── components/   # Reusable UI components
-├── pages/        # Next.js pages
+├── app/        # Next.js pages and api
 ├── styles/       # Global and Tailwind styles
-├── utils/        # Helper functions and API handlers
+├── db/        # To create database schema
 ├── lib/          # Database and ORM configurations
 ```
 
@@ -83,13 +90,10 @@ src/
 5. Push to the branch (`git push origin feature-branch`)
 6. Open a Pull Request
 
-## 📄 License
-
-This project is licensed under the [MIT License](LICENSE).
 
 ---
 
-### 👨‍💻 Developed by Payam
+### 👨‍💻 Developed by Rahul Kumar
 
 Feel free to reach out if you have any suggestions or feedback!
 
