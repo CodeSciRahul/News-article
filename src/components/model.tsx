@@ -15,7 +15,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
 import { useUser } from "@clerk/nextjs";
-import {Toaster, toast} from "react-hot-toast"
+import { Toaster, toast } from "react-hot-toast";
 
 // Form validation schema
 const preferencesSchema = z.object({
@@ -41,8 +41,8 @@ const style = {
 export default function UserPreferenceModel() {
   const [open, setOpen] = useState(true);
   const handleClose = () => setOpen(false);
-  const {user, isLoaded,isSignedIn} = useUser();
-  console.log(user?.id)
+  const handleOpen = () => setOpen(true);
+  const { user } = useUser();
 
   const {
     handleSubmit,
@@ -53,122 +53,147 @@ export default function UserPreferenceModel() {
   });
 
   // Handle form submission
-   const onSubmit = async(data: PreferencesForm) => {
+  const onSubmit = async (data: PreferencesForm) => {
     try {
-      const resposne = await axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/api/user-preference/${user?.id}`,data)
-        toast.success(`${resposne?.data?.message}`,{duration: 5000});
-        handleClose();
+      const resposne = await axios.post(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/api/user-preference/${user?.id}`,
+        data
+      );
+      toast.success(`${resposne?.data?.message}`, { duration: 5000 });
+      handleClose();
     } catch (error) {
-      console.log(error);
-      toast.error(`${error}`, {duration: 5000})
+      toast.error(`${error}`, { duration: 5000 });
     }
-    console.log("User Preferences:", data);
   };
 
   return (
-    <div>
-      <Modal
-        open={open}
-        onClose={handleClose}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-      >
-        <Box sx={style}>
-          <Typography id="modal-modal-title" variant="h6" component="h2">
-            Set Your Preferences
-          </Typography>
+    <>
+      <div>
+        <div className="flex flex-col justify-center items-center">
+          <h1 className="text-xl font-semibold text-gray-800">
+            Set Your Preferences to Personalize Your News Feed
+          </h1>
+          <p className="text-sm text-gray-600 mt-2">
+            Please select your preferences to tailor the news articles to your
+            interests.
+          </p>
+          <Button onClick={() => handleOpen()} className="mt-4">
+            Set Preferences
+          </Button>
+        </div>
 
-          <form onSubmit={handleSubmit(onSubmit)} style={{ marginTop: "1rem" }}>
-            {/* Categories Selection */}
-            <FormControl fullWidth sx={{ marginBottom: 2 }}>
-              <InputLabel id="categories-label">Categories</InputLabel>
-              <Controller
-                name="category"
-                control={control}
-                defaultValue={[]}
-                render={({ field }) => (
-                  <Select
-                    {...field}
-                    labelId="categories-label"
-                    multiple
-                    value={field.value}
-                    onChange={(e) => field.onChange(e.target.value)}
-                  >
-                    {categories.map((category) => (
-                      <MenuItem key={category.value} value={category.value}>
-                        {category.label}
-                      </MenuItem>
-                    ))}
-                  </Select>
+        <Modal
+          open={open}
+          onClose={handleClose}
+          aria-labelledby="modal-modal-title"
+          aria-describedby="modal-modal-description"
+        >
+          <Box sx={style}>
+            <Typography id="modal-modal-title" variant="h6" component="h2">
+              Set Your Preferences
+            </Typography>
+
+            <form
+              onSubmit={handleSubmit(onSubmit)}
+              style={{ marginTop: "1rem" }}
+            >
+              {/* Categories Selection */}
+              <FormControl fullWidth sx={{ marginBottom: 2 }}>
+                <InputLabel id="categories-label">Categories</InputLabel>
+                <Controller
+                  name="category"
+                  control={control}
+                  defaultValue={[]}
+                  render={({ field }) => (
+                    <Select
+                      {...field}
+                      labelId="categories-label"
+                      multiple
+                      value={field.value}
+                      onChange={(e) => field.onChange(e.target.value)}
+                    >
+                      {categories.map((category) => (
+                        <MenuItem key={category.value} value={category.value}>
+                          {category.label}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  )}
+                />
+                {errors.category && (
+                  <Typography color="error">
+                    {errors.category.message}
+                  </Typography>
                 )}
-              />
-              {errors.category && (
-                <Typography color="error">{errors.category.message}</Typography>
-              )}
-            </FormControl>
+              </FormControl>
 
-            {/* Language Selection */}
-            <FormControl fullWidth sx={{ marginBottom: 2 }}>
-              <InputLabel id="language-label">Language</InputLabel>
-              <Controller
-                name="language"
-                control={control}
-                defaultValue=""
-                render={({ field }) => (
-                  <Select
-                    {...field}
-                    labelId="language-label"
-                    value={field.value}
-                    onChange={(e) => field.onChange(e.target.value)}
-                  >
-                    {languages.map((lang) => (
-                      <MenuItem key={lang.value} value={lang.value}>
-                        {lang.label}
-                      </MenuItem>
-                    ))}
-                  </Select>
+              {/* Language Selection */}
+              <FormControl fullWidth sx={{ marginBottom: 2 }}>
+                <InputLabel id="language-label">Language</InputLabel>
+                <Controller
+                  name="language"
+                  control={control}
+                  defaultValue=""
+                  render={({ field }) => (
+                    <Select
+                      {...field}
+                      labelId="language-label"
+                      value={field.value}
+                      onChange={(e) => field.onChange(e.target.value)}
+                    >
+                      {languages.map((lang) => (
+                        <MenuItem key={lang.value} value={lang.value}>
+                          {lang.label}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  )}
+                />
+                {errors.language && (
+                  <Typography color="error">
+                    {errors.language.message}
+                  </Typography>
                 )}
-              />
-              {errors.language && (
-                <Typography color="error">{errors.language.message}</Typography>
-              )}
-            </FormControl>
+              </FormControl>
 
-            {/* Location Selection */}
-            <FormControl fullWidth sx={{ marginBottom: 2 }}>
-              <InputLabel id="location-label">Location</InputLabel>
-              <Controller
-                name="location"
-                control={control}
-                defaultValue=""
-                render={({ field }) => (
-                  <Select
-                    {...field}
-                    labelId="location-label"
-                    value={field.value}
-                    onChange={(e) => field.onChange(e.target.value)}
-                  >
-                    {locations.map((loc) => (
-                      <MenuItem key={loc.value} value={loc.value}>
-                        {loc.label}
-                      </MenuItem>
-                    ))}
-                  </Select>
+              {/* Location Selection */}
+              <FormControl fullWidth sx={{ marginBottom: 2 }}>
+                <InputLabel id="location-label">Location</InputLabel>
+                <Controller
+                  name="location"
+                  control={control}
+                  defaultValue=""
+                  render={({ field }) => (
+                    <Select
+                      {...field}
+                      labelId="location-label"
+                      value={field.value}
+                      onChange={(e) => field.onChange(e.target.value)}
+                    >
+                      {locations.map((loc) => (
+                        <MenuItem key={loc.value} value={loc.value}>
+                          {loc.label}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  )}
+                />
+                {errors.location && (
+                  <Typography color="error">
+                    {errors.location.message}
+                  </Typography>
                 )}
-              />
-              {errors.location && (
-                <Typography color="error">{errors.location.message}</Typography>
-              )}
-            </FormControl>
+              </FormControl>
 
-            {/* Submit Button */}
-            <Button type="submit" variant="contained" fullWidth>
-              Save Preferences
-            </Button>
-          </form>
-        </Box>
-      </Modal>
-      <Toaster />
-    </div>
+              {/* Submit Button */}
+              <Button type="submit" variant="contained" fullWidth>
+                Save Preferences
+              </Button>
+            </form>
+          </Box>
+        </Modal>
+        <Toaster />
+      </div>
+    </>
   );
 }

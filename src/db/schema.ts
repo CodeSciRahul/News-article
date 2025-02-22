@@ -1,4 +1,4 @@
-import {varchar, text,timestamp, integer, serial, pgTable, json } from "drizzle-orm/pg-core";
+import {varchar,timestamp, serial, pgTable, json } from "drizzle-orm/pg-core";
 
 
 export const userPreferences = pgTable("userPreferences", {

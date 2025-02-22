@@ -20,6 +20,10 @@ export async function POST(req: NextRequest, {params}: {params: {userId: string}
             return new Response(JSON.stringify({message: "Give correct payload", data: null}), {status: 400})
         }
         const {category, language, location} = validation?.data
+        
+        if (!db) {
+            return new Response(JSON.stringify({ message: "Database connection is not available", data: null }), { status: 500 });
+        }
        const result=await db.insert(userPreferences).values({
             userId,
             category,
@@ -36,6 +40,9 @@ export async function GET(req: NextRequest, { params }: { params: { userId: stri
     try {
         const { userId } = await params;
 
+        if (!db) {
+            return new Response(JSON.stringify({ message: "Database connection is not available", data: null }), { status: 500 });
+        }
         const userPreference = await db.select().from(userPreferences).where(eq(userPreferences.userId, userId));
 
         if (!userPreference.length) {
@@ -44,7 +51,6 @@ export async function GET(req: NextRequest, { params }: { params: { userId: stri
 
         return new Response(JSON.stringify({ message: "User Preference found", data: userPreference[0] }), { status: 200 });
     } catch (error) {
-        console.error("Error fetching user preference:", error);
         return new Response(JSON.stringify({ message: "Internal server error", error }), { status: 500 });
     }
 }

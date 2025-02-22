@@ -22,7 +22,7 @@ export async function GET(req: NextRequest, { params }: { params: { userId: stri
 }
 
 
-## 📌Mistake 2: Mistake 2: Using axios in a Server Component
+## 📌Mistake 2: Using axios in a Server Component
 ### ❌ Mistake: I tried to use axios in a server component:
 
 ```bash
@@ -249,6 +249,13 @@ export default function UserPreferenceForm({ userId }) {
 | **Database updates** | Next.js API Routes | Use Next.js backend API ✅ |
 
 By following these best practices, you ensure optimized performance and a better user experience in your Next.js applications. 🚀
+
+
+
+## Image Domain Configuration for Next.js
+
+If you are using Next.js's `<Image />` component with external images, ensure to configure allowed image domains in `next.config.js`. This prevents errors like:
+
 
 
 

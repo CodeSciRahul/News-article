@@ -21,16 +21,6 @@ interface ArticlesSchemas {
   news: [articleSchema];
 }
 
-interface querySchema {
-  category: string;
-  date: string;
-  title: string;
-  source: string;
-  snippet: string;
-  page: number;
-  limit: number;
-}
-
 interface userPreferenceSchema {
   category: Array<string>;
   language: string;
@@ -39,6 +29,10 @@ interface userPreferenceSchema {
 
 async function get_news(userId: string) {
   try {
+    
+    if (!db) {
+      return new Response(JSON.stringify({ message: "Database connection is not available", data: null }), { status: 500 });
+  }
     const userPreference = await db
       .select()
       .from(userPreferences)
@@ -52,12 +46,16 @@ async function get_news(userId: string) {
     const { category, language, location } =
       userPreference[0] as unknown as userPreferenceSchema;
 
-    let config = {
+    const config = {
       method: "get",
       maxBodyLength: Infinity,
-      url: `https://google.serper.dev/news?q=${category.slice().join("+")}&location=Mumbai%2C+Maharashtra%2C+India&gl=${location}&hl=${language}&num=20&tbs=qdr:y&page=2`,
+      url: `https://google.serper.dev/news?q=${category
+        .slice()
+        .join(
+          "+"
+        )}&location=Mumbai%2C+Maharashtra%2C+India&gl=${location}&hl=${language}&num=20&tbs=qdr:y&page=2`,
       headers: {
-        'X-API-KEY': process.env.SERPER_API_KEY
+        "X-API-KEY": process.env.SERPER_API_KEY,
       },
     };
 
@@ -71,13 +69,16 @@ async function get_news(userId: string) {
   }
 }
 
-
 //it will run hourly and store data in database.
 export async function POST(
   req: NextRequest,
   { params }: { params: { userId: string } }
 ) {
   try {
+    
+    if (!db) {
+      return new Response(JSON.stringify({ message: "Database connection is not available", data: null }), { status: 500 });
+  }
     const { userId } = await params;
     const newsDatas: ArticlesSchemas = await get_news(userId);
 
@@ -118,20 +119,27 @@ export async function POST(
   }
 }
 
-
 export async function GET(
   req: NextRequest,
   { params }: { params: { userId: string } }
 ) {
   try {
-    const { category, date, title, source, snippet } =
-      req.nextUrl.searchParams as unknown as querySchema;
+    
+    if (!db) {
+      return new Response(JSON.stringify({ message: "Database connection is not available", data: null }), { status: 500 });
+  }
+    const category = req.nextUrl.searchParams.get("category");
+    const date = req.nextUrl.searchParams.get("date");
+    const title = req.nextUrl.searchParams.get("title");
+    const source = req.nextUrl.searchParams.get("source");
+    const snippet = req.nextUrl.searchParams.get("snippet");
+
     const { userId } = await params;
-    const page = Number(req.nextUrl.searchParams.get('page')) || 1;
-    const limit = Number(req.nextUrl.searchParams.get('limit')) || 10;
+    const page = Number(req.nextUrl.searchParams.get("page")) || 1;
+    const limit = Number(req.nextUrl.searchParams.get("limit")) || 10;
     const skip = (page - 1) * Number(limit);
 
-    let filter: SQL[] = [];
+    const filter: SQL[] = [];
 
     if (userId) filter.push(eq(articles?.userId, userId));
     if (category) filter.push(eq(articles?.category, category));
@@ -140,29 +148,38 @@ export async function GET(
     if (source) filter.push(ilike(articles?.source, `%${source}`));
     if (snippet) filter.push(ilike(articles?.snippet, `%${snippet}`));
 
-    let news = await db
+    let allNews = await db
       .select()
       .from(articles)
       .where(and(...filter))
-      .limit(limit)
-      .offset(skip);
 
-      if (!news.length) {
-        // Call POST function to fetch and save news
-        await POST(req, { params: { userId } });
-  
-        // Fetch news again after inserting
-        news = await db
-          .select()
-          .from(articles)
-          .where(and(...filter))
-          .limit(limit)
-          .offset(skip);
-      }
+    if (!allNews.length && userId) {
+      // Call POST function to fetch and save news
+      await POST(req, { params: { userId } });
 
-    return new Response(JSON.stringify({message: "News reterived successfully", data: news}), {status: 200});
+      // Fetch news again after inserting
+      allNews = await db
+        .select()
+        .from(articles)
+        .where(and(...filter))
+  }
+    // Apply pagination on the filtered results
+    const paginatedNews = allNews.slice(skip, skip + limit);
+
+    const totalNewsCount = allNews.length;
+    const totalPages = Math.ceil(totalNewsCount / limit);
+
+
+
+    return new Response(
+      JSON.stringify({ message: "News reterived successfully", data: paginatedNews, totalPages }),
+      { status: 200 }
+    );
   } catch (error) {
     console.log(error);
-    return new Response(JSON.stringify({message: "Internal server error", data: null, error}), {status: 500});
+    return new Response(
+      JSON.stringify({ message: "Internal server error", data: null, error }),
+      { status: 500 }
+    );
   }
 }

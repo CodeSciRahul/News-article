@@ -8,7 +8,6 @@ import {
   UserButton,
 } from '@clerk/nextjs'
 import { Geist, Geist_Mono } from 'next/font/google'
-import { Protect } from '@clerk/nextjs'
 import './globals.css'
 
 const geistSans = Geist({
@@ -34,8 +33,8 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en">
-        <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-          <header className="flex justify-end items-center p-4 gap-4 h-16 bg-red-300">
+        <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-slate-100`}>
+          <header className="flex justify-end items-center p-4 gap-4 h-24 mb-16 bg-white shadow-sm">
             <SignedOut>
               <SignInButton />
               <SignUpButton />
