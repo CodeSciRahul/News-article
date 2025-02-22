@@ -27,18 +27,13 @@ const Page: NextPage<DashboardPageProps> = async ({ searchParams }) => {
       );
       checkUserPreference = await response.json();
     } catch (error) {
+      console.log("error", error);
       return (
         <div className="flex justify-center items-center min-h-screen">
           <Alert severity="error" className="max-w-md shadow-lg rounded-2xl">
             <AlertTitle>Connection Error {String(error)}</AlertTitle>
             Unable to fetch user preferences. Please ensure your Docker instance
             is running.
-            <br />
-            Run{" "}
-            <code className="bg-gray-100 px-1 py-0.5 rounded">
-              docker compose up -d
-            </code>{" "}
-            to start the required services.
           </Alert>
         </div>
       );
