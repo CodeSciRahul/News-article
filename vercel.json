@@ -1,0 +1,14 @@
+{
+    "functions": {
+      "api/news-article/hourly-fetch": {
+        "runtime": "bun"
+      }
+    },
+    "crons": [
+      {
+        "path": "/api/news-article/hourly-fetch",
+        "schedule": "0 * * * *"
+      }
+    ]
+  }
+  
