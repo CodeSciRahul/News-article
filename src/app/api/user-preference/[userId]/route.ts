@@ -4,17 +4,24 @@ import {z} from "zod"
 import { eq } from "drizzle-orm";
 import { NextRequest } from "next/server";
 
-export const userPreferencesSchema = z.object({
+const userPreferencesSchema = z.object({
     category: z.array(z.string()),
     language: z.string().optional(),
     location: z.string().optional()
   });
+
+  type RouteContext = {
+    params:Promise< {
+      userId: string
+    }>
+  }
+  
   
 
-export async function POST(req: NextRequest, {params}: {params: {userId: string}}){
+export async function POST(req: NextRequest,context: RouteContext){
     try {
         const body = await req.json();
-        const {userId} = await params
+        const { userId } = await context.params
         const validation = userPreferencesSchema.safeParse(body);
         if(!validation.success) {
             return new Response(JSON.stringify({message: "Give correct payload", data: null}), {status: 400})
@@ -36,9 +43,10 @@ export async function POST(req: NextRequest, {params}: {params: {userId: string}
     }
 }
 
-export async function GET(req: NextRequest, { params }: { params: { userId: string } }) {
+export async function GET(req: NextRequest,   context: RouteContext
+) {
     try {
-        const { userId } = await params;
+        const { userId } = await context.params
 
         if (!db) {
             return new Response(JSON.stringify({ message: "Database connection is not available", data: null }), { status: 500 });

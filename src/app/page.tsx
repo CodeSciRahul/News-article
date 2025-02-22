@@ -1,8 +1,5 @@
-"use client"
+import { redirect } from "next/navigation";
+
 export default function Home() {
-window.location.href = "/dashboard"  
-  return (
-   <div>
-   </div>
-  );
+  redirect("/dashboard"); //it will redirect in server
 }
