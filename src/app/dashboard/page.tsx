@@ -20,19 +20,10 @@ const Page: NextPage<DashboardPageProps> = async ({ searchParams }) => {
 
     let checkUserPreference;
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/user-preference/${user?.id}`); // Using relative path
-
-      if (!response.ok) {
-        console.error("Failed to fetch user preferences");
-        console.error("Status:", response.status);
-        console.error("Response:", await response.text());
-        throw new Error("Failed to fetch user preferences");
-      }
-
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/user-preference/${user?.id}`);
       checkUserPreference = await response.json();
     } catch (error) {
-      console.error("Error fetching user preferences:", error);
-      return <div className="flex justify-center items-center">Error fetching user preferences. Please try again later.</div>;
+      return <div className="flex justify-center items-center">Error fetching user preferences. Please try again later. {String(error)}</div>;
     }
 
     const data = checkUserPreference?.data;
@@ -57,16 +48,12 @@ const Page: NextPage<DashboardPageProps> = async ({ searchParams }) => {
         const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/news-article/${user?.id}?${queryParams}`);
 
         if (!res.ok) {
-          console.error("Failed to fetch news articles");
-          console.error("Status:", res.status);
-          console.error("Response:", await res.text());
           throw new Error("Failed to fetch news articles");
         }
 
         newsData = await res.json();
       } catch (error) {
-        console.error("Error fetching news articles:", error);
-        return <div>Error fetching news articles. Please try again later.</div>;
+        return <div className="flex justify-center items-center text-2xl">Error fetching news articles. Please try again later. {String(error)}</div>;
       }
 
       return <DashboardArticle news={newsData} />;
@@ -75,8 +62,7 @@ const Page: NextPage<DashboardPageProps> = async ({ searchParams }) => {
     // If no user preferences, prompt user to set them
     return <UserPreferenceModel />;
   } catch (error) {
-    console.error("An unexpected error occurred:", error);
-    return <div>Something went wrong. Please refresh the page or try again later.</div>;
+    return <div>Something went wrong. Please refresh the page or try again later. {String(error)}</div>;
   }
 };
 

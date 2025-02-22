@@ -19,5 +19,6 @@ export const articles = pgTable("articles", {
     source: varchar('source'),
     imageUrl: varchar('image_url', {length: 812}),
     category: varchar('category', {length: 70}).notNull(),
+    description: varchar('description'),
     createdAt: timestamp('created_at').defaultNow()
 })
