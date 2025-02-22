@@ -1,7 +1,5 @@
+import { redirect } from "next/navigation";
+
 export default function Home() {
-  return (
-   <div>
-    docker is working good
-   </div>
-  );
+  redirect("/dashboard"); //it will redirect in server
 }
