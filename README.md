@@ -52,9 +52,17 @@ NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
 
 4. **Run the Development Server**
 
-```bash
-bun run dev
-```
+### To run the Project follow these step.
+   ## 1 Install the Docker if not installed.
+   ## 2 Run the following cmd
+   ```bash
+   docker compose up -d
+   ```
+   ## Start the news-article container from Docker GUI
+   ## Run the fullowing cmd.
+   ```bash
+    bun run dev
+   ```
 
 5. **Build for Production**
 
