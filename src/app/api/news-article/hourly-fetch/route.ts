@@ -1,8 +1,8 @@
-import { NextApiRequest, NextApiResponse } from "next";
 import { db } from "@/lib/db";
 import { articles,userPreferences } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { get_news } from "@/app/api-function/get_news";
+import { NextRequest } from "next/server";
 
 interface NewsData {
     title: string;
@@ -13,11 +13,7 @@ interface NewsData {
     imageUrl: string;
 }
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== "GET") {
-    return res.status(405).json({ message: "Method not allowed" });
-  }
-
+export async function GET(req: NextRequest) {
   try {
     const allUsers = await db.select().from(userPreferences); // Fetch all users from the DB
 
@@ -39,6 +35,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const newsNotExistInUserDB = newsDatas.news.filter(
         (news: NewsData) => !existingLinks.has(news.link)
       );
+      console.log("news not existing in database", newsNotExistInUserDB)
 
       if (newsNotExistInUserDB.length > 0) {
 
@@ -64,9 +61,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
 
-    return res.status(200).json({ message: "Hourly news fetch complete" });
-  } catch (error) {
+    return new Response(
+        JSON.stringify({ message: "News reterived successfully" }),
+        { status: 200 }
+      );  } catch (error) {
     console.error("Error running hourly fetch: ", error);
-    return res.status(500).json({ message: "Internal Server Error" });
+    return  new Response(
+        JSON.stringify({ message: "Internal server error" , error}),
+        { status: 500 }
+      );  
   }
 }

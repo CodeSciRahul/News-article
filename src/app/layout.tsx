@@ -10,6 +10,7 @@ import {
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import QueryProvider from "@/components/QueryProvider";
+import "../lib/cron" //this ensure the cron job whenever server start.
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
