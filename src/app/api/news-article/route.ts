@@ -6,6 +6,7 @@ import { ilike, and, eq } from "drizzle-orm";
 import type { SQL } from "drizzle-orm";
 import { userPreferences } from "@/db/schema";
 import { NextRequest } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 
 interface articleSchema {
   title: string;
@@ -27,11 +28,6 @@ interface userPreferenceSchema {
   location: string;
 }
 
-type RouteContext = {
-  params: Promise<{
-    userId: string
-  }>
-}
 async function get_news(userId: string) {
   try {
     
@@ -77,15 +73,19 @@ async function get_news(userId: string) {
 //it will run hourly and store data in database.
 export async function POST(
   req: NextRequest,
-  context: RouteContext
 ) {
   try {
     
     if (!db) {
       return new Response(JSON.stringify({ message: "Database connection is not available", data: null }), { status: 500 });
   }
-    const { userId } = await context.params;
-    const newsDatas: ArticlesSchemas = await get_news(userId);
+  const authData = await auth();
+  const { userId } = authData;
+  await auth.protect();    
+  if (!userId) {
+    throw new Error("User ID is null");
+  }
+  const newsDatas: ArticlesSchemas = await get_news(userId);
 
     if (!newsDatas?.news?.length) {
       console.log("news not found");
@@ -126,7 +126,6 @@ export async function POST(
 
 export async function GET(
   req: NextRequest,
-  context: RouteContext
 ) {
   try {
     
@@ -139,7 +138,9 @@ export async function GET(
     const source = req.nextUrl.searchParams.get("source");
     const snippet = req.nextUrl.searchParams.get("snippet");
 
-    const { userId } = await context.params;
+    const authData = await auth();
+    const { userId } = authData;
+    await auth.protect();
     const page = Number(req.nextUrl.searchParams.get("page")) || 1;
     const limit = Number(req.nextUrl.searchParams.get("limit")) || 10;
     const skip = (page - 1) * Number(limit);
@@ -160,7 +161,7 @@ export async function GET(
 
     if (!allNews.length && userId) {
       // Call POST function to fetch and save news
-      await POST(req, context)
+      await POST(req)
 
       // Fetch news again after inserting
       allNews = await db

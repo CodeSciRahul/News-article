@@ -3,6 +3,7 @@ import { userPreferences } from "@/db/schema";
 import { z } from "zod";
 import { eq } from "drizzle-orm";
 import { NextRequest } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 
 const userPreferencesSchema = z.object({
   category: z.array(z.string()),
@@ -10,16 +11,18 @@ const userPreferencesSchema = z.object({
   location: z.string().optional(),
 });
 
-type RouteContext = {
-  params: Promise<{
-    userId: string;
-  }>;
-};
-
-export async function POST(req: NextRequest, context: RouteContext) {
+export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { userId } = await context.params;
+    const authData = await auth();
+    await auth.protect();
+    const { userId } = authData;
+    if (!userId) {
+      return new Response(
+        JSON.stringify({ message: "User ID is missing", data: null }),
+        { status: 400 }
+      );
+    }
     const validation = userPreferencesSchema.safeParse(body);
     if (!validation.success) {
       return new Response(
@@ -63,17 +66,30 @@ export async function POST(req: NextRequest, context: RouteContext) {
   }
 }
 
-export async function GET(req: NextRequest, context: RouteContext) {
+export async function GET(req: NextRequest) {
   try {
-    const { userId } = await context.params;
-
+    const authData = await auth();
+    const { userId } = authData;
+    console.log("authData", authData)
+    await auth.protect();
+    // Ensure database connection exists
     if (!db) {
       return new Response(
         JSON.stringify({
           message: "Database connection is not available",
           data: null,
         }),
-        { status: 500 }
+        {
+          status: 500,
+        }
+      );
+    }
+
+    // Fetch user preferences from the database
+    if (!userId) {
+      return new Response(
+        JSON.stringify({ message: "User ID is missing", data: null }),
+        { status: 400 }
       );
     }
     const userPreference = await db
@@ -84,7 +100,9 @@ export async function GET(req: NextRequest, context: RouteContext) {
     if (!userPreference.length) {
       return new Response(
         JSON.stringify({ message: "User preference not found", data: null }),
-        { status: 400 }
+        {
+          status: 400,
+        }
       );
     }
 
@@ -93,12 +111,16 @@ export async function GET(req: NextRequest, context: RouteContext) {
         message: "User Preference found",
         data: userPreference[0],
       }),
-      { status: 200 }
+      {
+        status: 200,
+      }
     );
   } catch (error) {
     return new Response(
-      JSON.stringify({ message: "Internal server error", error }),
-      { status: 500 }
+      JSON.stringify({ message: "Internal server error", error: error }),
+      {
+        status: 500,
+      }
     );
   }
 }

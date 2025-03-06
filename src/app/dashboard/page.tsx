@@ -1,10 +1,10 @@
 "use server";
 
-import { currentUser } from "@clerk/nextjs/server";
 import UserPreferenceModel from "@/components/model";
 import { DashboardArticle } from "@/components/dashboardArticle";
 import { NextPage } from "next";
 import { Alert, AlertTitle } from "@mui/material";
+import { auth } from "@clerk/nextjs/server";
 
 interface DashboardPageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -17,13 +17,19 @@ const Page: NextPage<DashboardPageProps> = async ({ searchParams }) => {
       resolvedSearchParams;
 
     // Fetch the current user
-    const user = await currentUser();
-    if (!user) return <div>Loading...</div>;
+    const authData = await auth();
+    const token = await authData.getToken();
 
     let checkUserPreference;
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/api/user-preference/${user?.id}`
+        `${process.env.NEXT_PUBLIC_BASE_URL}/api/user-preference`,
+        {
+          method: "GET",
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+        }
       );
       checkUserPreference = await response.json();
     } catch (error) {
@@ -65,7 +71,13 @@ const Page: NextPage<DashboardPageProps> = async ({ searchParams }) => {
       let newsData;
       try {
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/api/news-article/${user?.id}?${queryParams}`
+          `${process.env.NEXT_PUBLIC_BASE_URL}/api/news-article?${queryParams}`,
+          {
+            method: "GET",
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+          }
         );
 
         if (!res.ok) {
