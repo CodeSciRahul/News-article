@@ -41,7 +41,7 @@ const [filters, setFilters] = useState({
       source: "",
       snippet: "",
     });
-    router.push('/');
+    router.push('/dashboard');
   };
 
   
