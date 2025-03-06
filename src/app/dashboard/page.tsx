@@ -1,7 +1,9 @@
 
-import { currentUser } from "@clerk/nextjs/server";
+import { auth } from "@clerk/nextjs/server";
 import UserPreferenceModel from "@/components/model";
 import { DashboardArticle } from "@/components/dashboardArticle";
+import { headers } from "next/headers";
+import { checkCustomRoutes } from "next/dist/lib/load-custom-routes";
 
 interface searchParamsSchema {
   category: string | undefined,
@@ -15,13 +17,22 @@ interface searchParamsSchema {
 export default async function Page({searchParams}: {searchParams: searchParamsSchema}) {
   const {category, date, title, source, snippet, page} = await searchParams
 
-  const user = await currentUser();
-  if (!user) return <div>Loading...</div>;
+  const {userId} = await auth();
+  if (!userId) return <div>Loading...</div>;
+  const authData = await auth(); // Get authentication data
+  const token = await authData.getToken(); // Retrieve token
 
   const response = await fetch(
-    `${process.env.NEXT_PUBLIC_BASE_URL}/api/user-preference/${user?.id}`
+    `${process.env.NEXT_PUBLIC_BASE_URL}/api/user-preference`,
+    {
+      method: "GET",
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    }
   );
   const checkUserPreference = await response.json();
+  console.log("respone ",checkCustomRoutes)
   const data = checkUserPreference?.data;
 
 
@@ -36,7 +47,7 @@ export default async function Page({searchParams}: {searchParams: searchParamsSc
       ...(snippet && { snippet }),
     }).toString();
   
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/news-article/${user?.id}?${queryParams}`)
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/news-article/?${queryParams}`)
     const data = await res.json()
     return <DashboardArticle news={data} />;
   }

@@ -1,8 +1,8 @@
 "use client"
 export default function Home() {
-window.location.href = "/dashboard"  
   return (
    <div>
+    hello world
    </div>
   );
 }
