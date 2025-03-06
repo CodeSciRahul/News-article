@@ -1,8 +1,11 @@
 import { db } from "@/lib/db";
-import { articles,userPreferences } from "@/db/schema";
+import { articles, userPreferences } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { get_news } from "@/app/api-function/get_news";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextRequest } from "next/server";
+
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
 interface NewsData {
     title: string;
@@ -11,64 +14,109 @@ interface NewsData {
     date: string;
     source: string;
     imageUrl: string;
+    description?: string;
+    category?: string;
 }
 
-export async function GET(req: NextRequest) {
-  try {
-    const allUsers = await db.select().from(userPreferences); // Fetch all users from the DB
+/**
+ * Generates a description and category for a news article using Gemini AI.
+ */
+// import { genAI } from "@/lib/gemini"; // Ensure correct import
 
-    for (const user of allUsers) {
-      const userId = user.userId;
+async function enhanceNewsArticle(news: NewsData): Promise<NewsData> {
+    const systemPrompt = `You are an AI that summarizes and classifies news articles.
+        Given a news article with a title and snippet, generate:
+        1. A brief but informative description (50-100 words).
+        2. The most relevant category from: ["Politics", "Business", "Technology", "Entertainment", "Sports", "Health", "Science", "World", "Other"].
+        Respond in strict JSON format: { "description": "...", "category": "..." }.
+    `;
 
-      // Call the same news fetching logic
-      const newsDatas = await get_news(userId);
+    try {
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-      if (!newsDatas?.news?.length) continue;
+        const prompt = `Title: ${news.title}\nSnippet: ${news.snippet}\n\nGenerate description and category:`;
 
-      const existingNews = await db
-        .select()
-        .from(articles)
-        .where(eq(articles.userId, userId));
+        // Correct way to call generateContent
+        const result = await model.generateContent([systemPrompt, prompt]);
 
-      const existingLinks = new Set(existingNews.map((news) => news.link));
 
-      const newsNotExistInUserDB = newsDatas.news.filter(
-        (news: NewsData) => !existingLinks.has(news.link)
-      );
-      console.log("news not existing in database", newsNotExistInUserDB)
+        let aiResponse = await result.response.text();
 
-      if (newsNotExistInUserDB.length > 0) {
+        // If response is wrapped in ```json ... ```
+        aiResponse = aiResponse.replace(/```json|```/g, "").trim();
+        console.log("ai response", aiResponse)
 
-        const newsNotExistInUserDB: NewsData[] = newsDatas.news.filter(
-            (news: NewsData) => !existingLinks.has(news.link)
-        );
+        const parsedResponse = JSON.parse(aiResponse);
+        console.log("ai response", aiResponse)
 
-        if (newsNotExistInUserDB.length > 0) {
-            await db.insert(articles).values(
-                newsNotExistInUserDB.map((news: NewsData) => ({
-                    userId,
-                    title: news.title,
-                    link: news.link,
-                    snippet: news.snippet,
-                    date: news.date,
-                    source: news.source,
-                    imageUrl: news.imageUrl,
-                    category: "general",
-                    createdAt: new Date(),
-                }))
-            );
-        }
-      }
+        return {
+            ...news,
+            description: parsedResponse.description || "No description available.",
+            category: parsedResponse.category || "Other",
+        };
+    } catch (error) {
+        console.error("Error generating news description:", error);
+        return { ...news, description: "Error generating description", category: "Other" };
     }
+}
 
-    return new Response(
-        JSON.stringify({ message: "News reterived successfully" }),
-        { status: 200 }
-      );  } catch (error) {
-    console.error("Error running hourly fetch: ", error);
-    return  new Response(
-        JSON.stringify({ message: "Internal server error" , error}),
-        { status: 500 }
-      );  
-  }
+
+/**
+ * Fetches and stores news for all users, enhancing it with AI-generated descriptions and categories.
+ */
+export async function GET(req: NextRequest) {
+    try {
+        const allUsers = await db.select().from(userPreferences);
+
+        for (const user of allUsers) {
+            const userId = user.userId;
+
+            // Fetch news from API
+            const newsDatas = await get_news(userId);
+            if (!newsDatas?.news?.length) continue;
+
+            // Get existing news links to avoid duplicates
+            const existingNews = await db
+                .select()
+                .from(articles)
+                .where(eq(articles.userId, userId));
+
+            const existingLinks = new Set(existingNews.map((news) => news.link));
+
+            // Filter out already stored news
+            let newsToInsert = newsDatas.news.filter((news: NewsData) => !existingLinks.has(news.link));
+
+            // Enhance news with AI-generated descriptions and categories
+            newsToInsert = await Promise.all(newsToInsert.map(enhanceNewsArticle));
+
+            // Store in DB
+            if (newsToInsert.length > 0) {
+                await db.insert(articles).values(
+                    newsToInsert.map((news) => ({
+                        userId,
+                        title: news.title,
+                        link: news.link,
+                        snippet: news.snippet,
+                        date: news.date,
+                        source: news.source,
+                        imageUrl: news.imageUrl,
+                        description: news.description,
+                        category: news.category,
+                        createdAt: new Date(),
+                    }))
+                );
+            }
+        }
+
+        return new Response(
+            JSON.stringify({ message: "News retrieved and stored successfully" }),
+            { status: 200 }
+        );
+    } catch (error) {
+        console.error("Error running hourly fetch: ", error);
+        return new Response(
+            JSON.stringify({ message: "Internal server error", error }),
+            { status: 500 }
+        );
+    }
 }
