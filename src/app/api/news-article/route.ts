@@ -28,6 +28,11 @@ interface userPreferenceSchema {
   location: string;
 }
 
+type RouteContext = {
+  params: Promise<{
+    userId: string
+  }>
+}
 async function get_news(userId: string) {
   try {
     
