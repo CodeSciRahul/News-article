@@ -80,7 +80,7 @@ export const DashboardArticle: React.FC<DashboardArticleProps> = ({ news }) => {
           />
         </Stack>
       </div>
-      <div className="container mx-auto p-4 grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="container mx-auto p-4 grid grid-cols-1 lg:grid-cols-4 gap-4">
         <aside className="md:col-span-1">
           <FilterSidebar />
         </aside>
