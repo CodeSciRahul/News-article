@@ -1,114 +1,90 @@
 "use client";
 import FilterSidebar from "./filterSideBar";
 import NewsCard from "./newsCard";
-import { useState, useEffect } from "react";
 import Loader from "./ui/loader";
 import Pagination from "@mui/material/Pagination";
 import Stack from "@mui/material/Stack";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
+import { fetchNewsArticle } from "@/lib/fetchers/news-article";
+import { useAuth } from "@clerk/nextjs";
+import { useState } from "react";
+import { useEffect } from "react";
+import { NewsCardProps } from "./newsCard";
 
-interface articleSchema {
-  title: string;
-  link: string;
-  snippet: string;
-  date: string;
-  source: string;
-  imageUrl: string;
-  position: number;
-  description: string,
-  category: string;
-}
-
-interface ArticlesSchemas {
-  message: string;
-  data: [articleSchema];
-  totalPages: number;
-}
-
-export interface DashboardArticleProps {
-  news: ArticlesSchemas;
-}
-
-export const DashboardArticle: React.FC<DashboardArticleProps> = ({ news }) => {
+const DashboardArticle = () => {
   const searchParams = useSearchParams();
-  const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState<number>(1);
   const router = useRouter();
+  const page = searchParams.get("page") ? parseInt(searchParams.get("page")!, 10) : 1;
+  const { getToken } = useAuth();
 
-  interface HandlePageChangeEvent {
-    target: EventTarget;
-  }
+  const [queryParams, setqueryParams] = useState<string>('')
 
-  const handlePageChange = (event: HandlePageChangeEvent, value: number) => {
-    const searchParams = new URLSearchParams();
-    if (value) {
-      searchParams.set("page", value.toString());
-    }
-    router.push(`?${searchParams.toString()}`);
-  };
+  const getQueryParams = (query: string) => {
+    setqueryParams(query)
+    window.history.replaceState(null, "", `?${queryParams})`) }
 
-  useEffect(() => {
-    if (news) {
-      setLoading(false);
-    }
-  }, [news]);
+  // Use React Query for data fetching
+  const { data, isLoading, isFetching } = useQuery({
+    queryKey: ["news", { page, queryParams }],
+    queryFn: async () => {
+      const token = await getToken();
+      return fetchNewsArticle(token!, `page=${page}&${queryParams}`);
+    },
+    staleTime: 30000, // ensure to save data in cached memory for 30 second.
+  });
   
-  useEffect(() => {
-    const page = searchParams.get("page");
-    if (page) {
-      setCurrentPage(parseInt(page, 10));
-    }
-  }, [searchParams]);
 
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <Loader />
-      </div>
-    );
-  }
+  // Handle Page Change
+  const handlePageChange = (_: React.ChangeEvent<unknown>, value: number) => {
+    const searchParams = new URLSearchParams();
+    searchParams.set("page", value.toString());
+    window.history.replaceState(null, "", `?${searchParams.toString()}`,) }
 
   return (
     <div className="">
       <div className="flex justify-center">
         <Stack spacing={2}>
           <Pagination
-            count={news?.totalPages}
+            count={data?.totalPages || 1}
             variant="outlined"
             shape="rounded"
             onChange={handlePageChange}
-            page={currentPage}
+            page={page}
           />
         </Stack>
       </div>
+
       <div className="container mx-auto p-4 grid grid-cols-1 lg:grid-cols-4 gap-4">
         <aside className="md:col-span-1">
-          <FilterSidebar />
+          <FilterSidebar setqueryParams={getQueryParams}/>
         </aside>
         <main className="md:col-span-3 space-y-4">
-          {news?.data?.length ? (
-            news.data.map((article, index) => (
-              <NewsCard key={index} {...article} />
-            ))
-          ) : (
-            <div className="text-center text-lg font-semibold text-gray-600">
-              No news found
+          {isLoading || isFetching ? (
+            <div className="flex justify-center items-center h-64">
+              <Loader />
             </div>
+          ) : data?.data?.length ? (
+            data.data.map((article: NewsCardProps, index: number) => <NewsCard key={index} {...article} />)
+          ) : (
+            <div className="text-center text-lg font-semibold text-gray-600">No news found</div>
           )}
         </main>
       </div>
+
       <div className="flex justify-center my-2">
         <Stack spacing={2}>
           <Pagination
-            count={news?.totalPages}
+            count={data?.totalPages || 1}
             variant="outlined"
             shape="rounded"
             onChange={handlePageChange}
-            page={currentPage}
+            page={page}
           />
         </Stack>
       </div>
     </div>
   );
 };
+
+export default DashboardArticle;

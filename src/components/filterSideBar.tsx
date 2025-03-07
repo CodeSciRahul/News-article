@@ -10,8 +10,11 @@ import {
 } from "@mui/material";
 import { FilterList } from "@mui/icons-material";
 import { useRouter, useSearchParams } from "next/navigation";
+interface queryFunc {
+  (query: string): void;
+}
 
-const FilterSidebar = () => {
+const FilterSidebar = ({ setqueryParams }: { setqueryParams: queryFunc }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -34,7 +37,7 @@ const FilterSidebar = () => {
     Object.entries(filters).forEach(([key, value]) => {
       if (value) searchParams.set(key, value);
     });
-    router.push(`?${searchParams.toString()}`);
+    setqueryParams(`${searchParams.toString()}`);
     setDrawerOpen(false); // Close drawer after applying filters
   };
 
@@ -46,7 +49,8 @@ const FilterSidebar = () => {
       source: "",
       snippet: "",
     });
-    router.push("/dashboard");
+    window.history.replaceState(null, "", "/dashboard")
+    setqueryParams('');
     setDrawerOpen(false);
   };
 

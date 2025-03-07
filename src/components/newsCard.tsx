@@ -6,7 +6,7 @@ import Image from "next/image";
 import { Card, CardContent } from "@mui/material";
 import ArticleModal from "./articleModel";
 
-interface NewsCardProps {
+export interface NewsCardProps {
   title: string;
   link: string;
   snippet: string;
