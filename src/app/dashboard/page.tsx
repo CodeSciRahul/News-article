@@ -60,12 +60,6 @@ const Page: NextPage<DashboardPageProps> = async ({ searchParams }) => {
       let newsData;
       try {
         newsData = await fetchNewsArticle(token, queryParams);
-        if(!newsData.length) {
-          return (
-            <div className="flex justify-center items-center min-h-screen">
-              Wait a minute to load news-article.
-            </div>
-          );     }
       } catch (error) {
         console.error("Error fetching news articles:", error);
         return (

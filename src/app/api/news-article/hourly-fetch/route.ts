@@ -86,6 +86,7 @@ export async function GET(req: NextRequest) {
 
             // Enhance news with AI-generated descriptions and categories
             newsToInsert = await Promise.all(newsToInsert.map(enhanceNewsArticle));
+            console.log("new data ", newsToInsert)
 
             // Store in DB
             if (newsToInsert.length > 0) {

@@ -15,7 +15,6 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const authData = await auth();
-    // await auth.protect();
     const { userId } = authData;
     console.log("userId", userId)
     await auth.protect();
