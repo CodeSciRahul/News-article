@@ -1,11 +1,8 @@
-export async function fetchNewsArticle() {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/posts`, {
-      cache: "no-store",
+export async function fetchNewsArticle(token: string, queryParams: unknown) {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/news-article?${queryParams}`, {
+        method: "GET",
+        headers: { "Authorization": `Bearer ${token}` },
     });
-  
-    if (!res.ok) {
-      throw new Error("Failed to fetch posts");
-    }
   
     return res.json();
   }

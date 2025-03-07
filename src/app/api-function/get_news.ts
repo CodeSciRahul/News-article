@@ -36,7 +36,7 @@ export async function get_news(userId: string) {
           .slice()
           .join(
             "+"
-          )}&location=Mumbai%2C+Maharashtra%2C+India&gl=${location}&hl=${language}&num=20&tbs=qdr:y&page=2`,
+          )}&location=Mumbai%2C+Maharashtra%2C+India&gl=${location}&hl=${language}&num=10&tbs=qdr:y&page=2`,
         headers: {
           "X-API-KEY": process.env.SERPER_API_KEY,
         },

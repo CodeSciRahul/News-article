@@ -44,10 +44,8 @@ async function enhanceNewsArticle(news: NewsData): Promise<NewsData> {
 
         // If response is wrapped in ```json ... ```
         aiResponse = aiResponse.replace(/```json|```/g, "").trim();
-        console.log("ai response", aiResponse)
 
         const parsedResponse = JSON.parse(aiResponse);
-        console.log("ai response", aiResponse)
 
         return {
             ...news,
@@ -92,7 +90,7 @@ export async function GET(req: NextRequest) {
             // Store in DB
             if (newsToInsert.length > 0) {
                 await db.insert(articles).values(
-                    newsToInsert.map((news) => ({
+                    newsToInsert.map((news: any) => ({
                         userId,
                         title: news.title,
                         link: news.link,

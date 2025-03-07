@@ -16,6 +16,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
 import { useUser } from "@clerk/nextjs";
 import { Toaster, toast } from "react-hot-toast";
+import { useMutation } from "@tanstack/react-query";
+import { useAuth } from "@clerk/nextjs";
 
 // Form validation schema
 const preferencesSchema = z.object({
@@ -42,8 +44,6 @@ export default function UserPreferenceModel() {
   const [open, setOpen] = useState(true);
   const handleClose = () => setOpen(false);
   const handleOpen = () => setOpen(true);
-  const { user } = useUser();
-
   const {
     handleSubmit,
     control,
@@ -52,18 +52,54 @@ export default function UserPreferenceModel() {
     resolver: zodResolver(preferencesSchema),
   });
 
+  const { getToken } = useAuth();
+
+
+  const createUserPreference = async (
+    newData: PreferencesForm
+  ): Promise<MutationResponse> => {
+    const token = await getToken();
+    const response = await axios.post(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/user-preference`,
+      newData,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    return response.data;
+  };
+
+  // Using useMutation
+  interface MutationResponse {
+    data: any;
+  }
+
+  interface MutationError {
+    message: string;
+  }
+
+  const { mutate, error } = useMutation<
+  MutationResponse,
+  MutationError,
+  PreferencesForm
+>({
+  mutationFn: createUserPreference,
+  onSuccess: (response) => {
+    toast.success("Preferences saved successfully!");
+    console.log("Data created successfully", response);
+  },
+  onError: (error) => {
+    toast.error("Failed to save preferences.");
+    console.error("Error creating data", error);
+  },
+});
+
   // Handle form submission
-  const onSubmit = async (data: PreferencesForm) => {
-    try {
-      const resposne = await axios.post(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/api/user-preference/${user?.id}`,
-        data
-      );
-      toast.success(`${resposne?.data?.message}`, { duration: 5000 });
-      handleClose();
-    } catch (error) {
-      toast.error(`${error}`, { duration: 5000 });
-    }
+  const onSubmit = (data: PreferencesForm) => {
+    mutate(data);
   };
 
   return (

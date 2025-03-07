@@ -7,6 +7,7 @@ import type { SQL } from "drizzle-orm";
 import { userPreferences } from "@/db/schema";
 import { NextRequest } from "next/server";
 import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 
 interface articleSchema {
   title: string;
@@ -141,6 +142,9 @@ export async function GET(
     const authData = await auth();
     const { userId } = authData;
     await auth.protect();
+    if(!userId) {
+     return redirect("sign-in")
+    }
     const page = Number(req.nextUrl.searchParams.get("page")) || 1;
     const limit = Number(req.nextUrl.searchParams.get("limit")) || 10;
     const skip = (page - 1) * Number(limit);
@@ -159,16 +163,11 @@ export async function GET(
       .from(articles)
       .where(and(...filter))
 
-    if (!allNews.length && userId) {
-      // Call POST function to fetch and save news
-      await POST(req)
-
-      // Fetch news again after inserting
-      allNews = await db
-        .select()
-        .from(articles)
-        .where(and(...filter))
-  }
+    if (!allNews.length) {
+      return new Response(
+        JSON.stringify({ message: "Wait to reterive news from database.", data: allNews }),
+        { status: 200 }
+      );  }
     // Apply pagination on the filtered results
     const paginatedNews = allNews.slice(skip, skip + limit);
 
