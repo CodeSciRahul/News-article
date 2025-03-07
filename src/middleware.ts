@@ -9,7 +9,7 @@ export default clerkMiddleware(async (auth, req) => {
 
   }
   if (isApiRoute(req)) {
-    const authData = await auth();
+    await auth.protect();
   }
 });
 

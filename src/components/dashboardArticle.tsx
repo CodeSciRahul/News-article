@@ -15,6 +15,8 @@ interface articleSchema {
   source: string;
   imageUrl: string;
   position: number;
+  description: string,
+  category: string;
 }
 
 interface ArticlesSchemas {
@@ -23,7 +25,7 @@ interface ArticlesSchemas {
   totalPages: number;
 }
 
-interface DashboardArticleProps {
+export interface DashboardArticleProps {
   news: ArticlesSchemas;
 }
 

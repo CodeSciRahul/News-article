@@ -73,7 +73,6 @@ async function get_news(userId: string) {
 
 //it will run hourly and store data in database.
 export async function POST(
-  req: NextRequest,
 ) {
   try {
     
@@ -158,7 +157,7 @@ export async function GET(
     if (source) filter.push(ilike(articles?.source, `%${source}`));
     if (snippet) filter.push(ilike(articles?.snippet, `%${snippet}`));
 
-    let allNews = await db
+    const allNews = await db
       .select()
       .from(articles)
       .where(and(...filter))

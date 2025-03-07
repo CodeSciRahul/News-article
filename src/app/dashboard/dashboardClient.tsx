@@ -4,12 +4,41 @@ import { Alert, AlertTitle } from "@mui/material";
 import UserPreferenceModel from "@/components/model";
 import { DashboardArticle } from "@/components/dashboardArticle";
 
+interface userPreferenceSchema {
+ data:{ userId: string,
+  category: string[],
+  language: string,
+  location: string  }
+}
+
+interface articleSchema {
+  title: string;
+  link: string;
+  snippet: string;
+  date: string;
+  source: string;
+  imageUrl: string;
+  position: number;
+  description: string,
+  category: string;
+}
+
+interface ArticlesSchemas {
+  message: string;
+  data: [articleSchema];
+  totalPages: number;
+}
+
+export interface DashboardArticleProps {
+  news: ArticlesSchemas;
+}
+
 export default function DashboardClient({
   userPreference,
   newsData,
 }: {
-  userPreference: any;
-  newsData: any;
+  userPreference: userPreferenceSchema;
+  newsData: ArticlesSchemas;
 }) {
   // If user preferences couldn't be fetched, show an error
   if (!userPreference) {
@@ -37,5 +66,5 @@ export default function DashboardClient({
     );
   }
 
-  return <DashboardArticle news={newsData} />;
+  return <DashboardArticle news={{ ...newsData }} />;
 }

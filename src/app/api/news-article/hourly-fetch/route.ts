@@ -3,7 +3,6 @@ import { articles, userPreferences } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { get_news } from "@/app/api-function/get_news";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { NextRequest } from "next/server";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
@@ -62,7 +61,7 @@ async function enhanceNewsArticle(news: NewsData): Promise<NewsData> {
 /**
  * Fetches and stores news for all users, enhancing it with AI-generated descriptions and categories.
  */
-export async function GET(req: NextRequest) {
+export async function GET() {
     try {
         const allUsers = await db.select().from(userPreferences);
 
@@ -91,7 +90,7 @@ export async function GET(req: NextRequest) {
             // Store in DB
             if (newsToInsert.length > 0) {
                 await db.insert(articles).values(
-                    newsToInsert.map((news: any) => ({
+                    newsToInsert.map((news: NewsData) => ({
                         userId,
                         title: news.title,
                         link: news.link,

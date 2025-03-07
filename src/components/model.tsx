@@ -14,7 +14,6 @@ import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
-import { useUser } from "@clerk/nextjs";
 import { Toaster, toast } from "react-hot-toast";
 import { useMutation } from "@tanstack/react-query";
 import { useAuth } from "@clerk/nextjs";
@@ -74,14 +73,17 @@ export default function UserPreferenceModel() {
 
   // Using useMutation
   interface MutationResponse {
-    data: any;
+    userId: string,
+    category: string[],
+    language: string,
+    location: string  
   }
 
   interface MutationError {
     message: string;
   }
 
-  const { mutate, error } = useMutation<
+  const { mutate } = useMutation<
   MutationResponse,
   MutationError,
   PreferencesForm
